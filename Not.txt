@@ -1,0 +1,2 @@
+nodejs kurulması gerekir
+npm install && npm run dev
