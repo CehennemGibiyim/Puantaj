@@ -1,3 +1,4 @@
+https://cehennemgibiyim.github.io/Puantaj/
 # Personel Puantaj Sistemi
 
 Bu proje, personel puantajını aylık olarak takip etmek için hazırlanmış React + TypeScript tabanlı bir uygulamadır.
