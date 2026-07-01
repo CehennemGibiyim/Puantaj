@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mustafa Uygur — Temmuz 2026 Özet</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:#0f172a;color:#e6eef8;padding:24px}
+  .card{background:#0b1220;border:1px solid #18324a;padding:18px;border-radius:8px;max-width:1100px;margin:0 auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid #193445;padding:6px;text-align:center}
+  th{background:#072233;color:#dff4ff}
+  .week-sum{background:#072b2f;color:#bff0d6;font-weight:600}
+  .positive{color:#86efac}
+  .negative{color:#fb7185}
+  .meta{font-size:13px;margin-bottom:10px;color:#9fb6c8}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>Mustafa Uygur — Temmuz 2026</h2>
+    <div class="meta">Günlük standart (ISCI): 7,5 saat — Hafta içi: Pzt–Cum</div>
+    <div id="table-root"></div>
+    <p style="margin-top:12px;font-size:13px;color:#9fb6c8">Not: Veriler örnek (mock) olarak üretildi; gerçek veriler için Supabase sorgusu gereklidir.</p>
+  </div>
+<script>
+(function(){
+  const year = 2026, month = 6; // July (0-based index)
+  const name = 'MUSTAFA UYGUR';
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  function isWeekend(y,m,d){const dd=new Date(y,m,d).getDay();return dd===0||dd===6}
+  // Mock hours: weekdays default 7.5, every 3rd weekday +0.5, and force day 15 -> 8
+  const hours = {};
+  for(let d=1;d<=daysInMonth;d++){
+    if(isWeekend(year,month,d)){ hours[d]=0; continue; }
+    let h = 7.5 + ((d%3===0)?0.5:0);
+    if(d===15) h = 8.0; // user-cited day
+    if(d===9) h = 0; // simulate a day off/sick
+    hours[d]=h;
+  }
+
+  // Compute weeks like app: push until Sunday or month end
+  const weeks=[]; let wk=[];
+  for(let d=1;d<=daysInMonth;d++){
+    wk.push(d);
+    const dow = new Date(year,month,d).getDay();
+    if(dow===0 || d===daysInMonth){ weeks.push(wk); wk=[]; }
+  }
+
+  const dailyStandard = 7.5;
+  function format(v){ return v===0? '': (Number(v).toString().replace('.',',')); }
+
+  // Build table
+  let html = '<table><thead><tr><th>Gün</th>';
+  // header days
+  for(let d=1;d<=daysInMonth;d++) html += '<th>'+d+'</th>';
+  html += '<th>Hafta/İlk</th><th>Hafta/Çal.</th><th>Hafta/Fark</th></tr></thead><tbody>';
+
+  // Only one person: a row
+  html += '<tr><th>'+name+'</th>';
+  for(let d=1;d<=daysInMonth;d++) html += '<td>'+format(hours[d])+'</td>';
+
+  // compute weekly aggregates, place them in last columns as totals across all weeks
+  let monthlyRequired=0, monthlyWorked=0;
+  weeks.forEach(w=>{
+    const req = w.filter(d=>!isWeekend(year,month,d)).length * dailyStandard;
+    const worked = w.reduce((s,d)=>s + (hours[d]||0), 0);
+    monthlyRequired += req; monthlyWorked += worked;
+  });
+  html += '<td class="week-sum">'+Number(monthlyRequired).toString().replace('.',',')+'</td>';
+  html += '<td class="week-sum">'+Number(monthlyWorked).toString().replace('.',',')+'</td>';
+  const diff = +(monthlyWorked - monthlyRequired).toFixed(2);
+  html += '<td class="week-sum">'+(diff>=0? '+'+diff : diff).toString().replace('.',',')+'</td>';
+  html += '</tr>';
+
+  // Per-week summary rows
+  weeks.forEach((w,i)=>{
+    const req = w.filter(d=>!isWeekend(year,month,d)).length * dailyStandard;
+    const worked = w.reduce((s,d)=>s + (hours[d]||0), 0);
+    const df = +(worked - req).toFixed(2);
+    html += '<tr style="background:#071727"><th>Hafta '+(i+1)+'</th>';
+    for(let d=1;d<=daysInMonth;d++){
+      if(w.includes(d)){
+        html += '<td style="background:#071727;color:#bfe9ff">'+format(hours[d])+'</td>';
+      } else html += '<td></td>';
+    }
+    html += '<td class="week-sum">'+req.toString().replace('.',',')+'</td>';
+    html += '<td class="week-sum">'+worked.toString().replace('.',',')+'</td>';
+    html += '<td class="week-sum">'+(df>=0? '+'+df : df).toString().replace('.',',')+'</td>';
+    html += '</tr>';
+  });
+
+  // Monthly footer
+  html += '<tr><th>Ay Toplam</th>';
+  for(let d=1;d<=daysInMonth;d++) html += '<td>'+(hours[d]?hours[d].toString().replace('.',','):'')+'</td>';
+  html += '<td style="font-weight:700">'+monthlyRequired.toString().replace('.',',')+'</td>';
+  html += '<td style="font-weight:700">'+monthlyWorked.toString().replace('.',',')+'</td>';
+  html += '<td style="font-weight:700">'+(diff>=0? '+'+diff: diff).toString().replace('.',',')+'</td>';
+  html += '</tr>';
+
+  html += '</tbody></table>';
+
+  document.getElementById('table-root').innerHTML = html;
+})();
+</script>
+</body>
+</html>
